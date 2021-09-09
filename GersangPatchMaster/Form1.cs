@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Windows.Forms;
 
 
@@ -120,6 +121,44 @@ namespace GersangPatchMaster
                 MessageBox.Show("유효하지 않은 버전입니다. 거상 홈페이지 공지사항에 게시된 버전을 입력해주세요.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 infoFile.Delete();
                 return;
+            }
+
+            //패치 정보 파일에서 패치 파일 목록을 뽑아낸다.
+            List<string> patchFileList = new List<string>();
+            List<string> patchPathList = new List<string>();
+
+            string[] lines = System.IO.File.ReadAllLines(targetdownloadedFile, Encoding.Default);
+            for(int i = 4; i < lines.Length; i++)
+            {
+                string[] row = lines[i].Split('\t');
+                if(row[0] == ";EOF")
+                {
+                    break;
+                }
+
+                patchFileList.Add(row[1]);
+                patchPathList.Add(row[3]);
+            }
+
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0; i < patchFileList.Count; i++)
+            {
+                sb.Append(patchFileList[i] + " " + patchPathList[i] + "\n");
+            }
+
+            MessageBox.Show(sb.ToString());
+
+            for(int i = 0; i < patchFileList.Count; i++)
+            {
+                string patchFilePath = patchPathList[i].Replace(@"\", @"/") + patchFileList[i];
+                Uri patchFileUrl = new Uri(@"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/Client_Patch_File" + patchFilePath);
+
+                System.IO.DirectoryInfo versionDirectory = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
+                if (!versionDirectory.Exists) { versionDirectory.Create(); }
+
+                
+                //downloadManager = new DownloadManager();
+                downloadManager.DownloadFile(patchFileUrl.ToString(), versionDirectory.ToString() + @"\" + patchFileList[i]);
             }
         }
 
