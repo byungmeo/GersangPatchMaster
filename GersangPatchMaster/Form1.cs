@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -19,6 +20,7 @@ namespace GersangPatchMaster
         string version;
         int patchFileCount;
         int downloadCompletedCount;
+        Stopwatch sw;
 
         public Form1()
         {
@@ -123,13 +125,16 @@ namespace GersangPatchMaster
 
             //패치 정보 파일을 다운로드 받아온다
             string patchInfoFilePath = patchInfoDir + @"\" + version; //패치 정보 파일이 저장될 위치와 파일명
-            downloadFile(infoUrl, patchInfoFilePath); //패치 정보 파일을 PatchInfoFiles 폴더에 설치합니다.
+
+            WebClient infoDownloader = new WebClient();
+            infoDownloader.DownloadFile(infoUrl, patchInfoFilePath); //패치 정보 파일이 완료되기 전에 패치 정보 파일에 접근해버려서 동기식으로 다운
+            //downloadFile(infoUrl, patchInfoFilePath); //패치 정보 파일을 PatchInfoFiles 폴더에 설치합니다.
 
             //패치 정보 파일에서 패치 파일 리스트를 뽑아낸다
             var files = new Dictionary<string, string>(); //key값으로 패치파일의경로, Value값으로 패치파일다운로드주소를 저장합니다.
 
             string[] lines = File.ReadAllLines(patchInfoFilePath, Encoding.Default); //패치정보파일에서 모든 텍스트를 읽어옵니다.
-            patchFileCount = lines.Length - 4; //쓸모없는4줄 + EOF줄 - 패치 정보 파일
+            patchFileCount = lines.Length - 5; //쓸모없는4줄 + EOF줄
             Console.WriteLine("다운받아야하는 패치 파일의 갯수 : " + patchFileCount);
 
             //패치정보파일의 첫 4줄은 쓸모없으므로 생략하고, 5번째 줄부터 읽습니다.
@@ -154,6 +159,8 @@ namespace GersangPatchMaster
             System.IO.DirectoryInfo versionDirectory = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
             if (!versionDirectory.Exists) { versionDirectory.Create(); }
 
+            sw = new Stopwatch();
+            sw.Start();
             //버전이름의 폴더에 패치 파일을 다운로드합니다.
             foreach (var file in files)
             {
@@ -192,6 +199,8 @@ namespace GersangPatchMaster
                     if(downloadCompletedCount == patchFileCount)
                     {
                         Console.WriteLine("모든 패치파일 다운로드 완료!");
+                        sw.Stop();
+                        Console.WriteLine("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과");
                     }
                 }
             };
