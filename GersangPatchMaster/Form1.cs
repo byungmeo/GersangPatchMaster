@@ -17,6 +17,8 @@ namespace GersangPatchMaster
         string patchInfoDir;
         Uri infoUrl;
         string version;
+        int patchFileCount;
+        int downloadCompletedCount;
 
         public Form1()
         {
@@ -116,6 +118,9 @@ namespace GersangPatchMaster
 
         private void button2_Click(object sender, EventArgs e)
         {
+            patchFileCount = 0;
+            downloadCompletedCount = 0;
+
             //패치 정보 파일을 다운로드 받아온다
             string patchInfoFilePath = patchInfoDir + @"\" + version; //패치 정보 파일이 저장될 위치와 파일명
             downloadFile(infoUrl, patchInfoFilePath); //패치 정보 파일을 PatchInfoFiles 폴더에 설치합니다.
@@ -124,8 +129,10 @@ namespace GersangPatchMaster
             var files = new Dictionary<string, string>(); //key값으로 패치파일의경로, Value값으로 패치파일다운로드주소를 저장합니다.
 
             string[] lines = File.ReadAllLines(patchInfoFilePath, Encoding.Default); //패치정보파일에서 모든 텍스트를 읽어옵니다.
+            patchFileCount = lines.Length - 4; //쓸모없는4줄 + EOF줄 - 패치 정보 파일
+            Console.WriteLine("다운받아야하는 패치 파일의 갯수 : " + patchFileCount);
 
-            //패치정보파일의 첫 3줄은 쓸모없으므로 생략하고, 4번째 줄부터 읽습니다.
+            //패치정보파일의 첫 4줄은 쓸모없으므로 생략하고, 5번째 줄부터 읽습니다.
             for (int i = 4; i < lines.Length; i++)
             {
                 string[] row = lines[i].Split('\t'); //한 줄을 탭을 간격으로 나눕니다.
@@ -181,7 +188,11 @@ namespace GersangPatchMaster
                     Console.WriteLine("오류 메시지 : " + e.Error.Message);
                 } else
                 {
-                    Console.WriteLine(fileName + " 다운로드 완료!");
+                    Console.WriteLine(fileName + " 다운로드 완료! " + (patchFileCount - (++downloadCompletedCount)) + "개 남음!");
+                    if(downloadCompletedCount == patchFileCount)
+                    {
+                        Console.WriteLine("모든 패치파일 다운로드 완료!");
+                    }
                 }
             };
 
