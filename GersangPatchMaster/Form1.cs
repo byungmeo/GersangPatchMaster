@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -131,7 +132,7 @@ namespace GersangPatchMaster
             //downloadFile(infoUrl, patchInfoFilePath); //패치 정보 파일을 PatchInfoFiles 폴더에 설치합니다.
 
             //패치 정보 파일에서 패치 파일 리스트를 뽑아낸다
-            var files = new Dictionary<string, string>(); //key값으로 패치파일의경로, Value값으로 패치파일다운로드주소를 저장합니다.
+            Dictionary<string, string> files = new Dictionary<string, string>(); //key값으로 패치파일의경로, Value값으로 패치파일다운로드주소를 저장합니다.
 
             string[] lines = File.ReadAllLines(patchInfoFilePath, Encoding.Default); //패치정보파일에서 모든 텍스트를 읽어옵니다.
             patchFileCount = lines.Length - 5; //쓸모없는4줄 + EOF줄
@@ -186,6 +187,7 @@ namespace GersangPatchMaster
             if (!fileDirectory.Exists) { fileDirectory.Create(); }
 
             //하나의 패치 파일 다운로드를 완료하면, 콘솔에 메시지를 출력합니다.
+            //그리고 압축해제를 시작합니다.
             client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) =>
             {
                 // display completion status.
@@ -201,12 +203,39 @@ namespace GersangPatchMaster
                         Console.WriteLine("모든 패치파일 다운로드 완료!");
                         sw.Stop();
                         Console.WriteLine("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과");
+
+                        Console.WriteLine("압축 해제를 시작합니다!");
+                        extractGszInDirectory(new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version));
                     }
                 }
             };
 
             //지정된 경로에 패치 파일 다운로드를 시작합니다.
             client.DownloadFileAsync(downloadUrl, filePath);
+        }
+
+        //한 폴더 내에 있는 모든 Gsz 파일을 압축해제 합니다. (폴더 안의 폴더까지)
+        private void extractGszInDirectory(DirectoryInfo directoryPath)
+        {
+            foreach (DirectoryInfo dirInfo in directoryPath.GetDirectories())
+            {
+                extractGszInDirectory(dirInfo);
+            }
+
+            foreach (FileInfo fileInfo in directoryPath.GetFiles("*.gsz"))
+            {
+                string dirPath = directoryPath.FullName;
+                dirPath = dirPath.Remove(0, Application.StartupPath.Length);
+                dirPath = dirPath.Insert(6, "_unpack");
+
+                extractGsz(fileInfo.FullName, Application.StartupPath + dirPath);
+            }
+        }
+
+        //모든 gsz 파일을 압축해제 합니다.
+        private async void extractGsz(string zipPath, string extractPath)
+        {
+            ZipFile.ExtractToDirectory(zipPath, extractPath);
         }
     }
 }
