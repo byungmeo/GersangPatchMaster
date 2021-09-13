@@ -34,7 +34,7 @@ namespace GersangPatchMaster
             this.label1 = new System.Windows.Forms.Label();
             this.btn_startPatch = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
-            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.tb_gersangPath = new System.Windows.Forms.TextBox();
             this.btn_openPathFinder = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -89,12 +89,12 @@ namespace GersangPatchMaster
             this.label2.TabIndex = 4;
             this.label2.Text = "선택 버전 : ";
             // 
-            // textBox2
+            // tb_gersangPath
             // 
-            this.textBox2.Location = new System.Drawing.Point(28, 104);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(357, 21);
-            this.textBox2.TabIndex = 5;
+            this.tb_gersangPath.Location = new System.Drawing.Point(28, 104);
+            this.tb_gersangPath.Name = "tb_gersangPath";
+            this.tb_gersangPath.Size = new System.Drawing.Size(357, 21);
+            this.tb_gersangPath.TabIndex = 5;
             // 
             // btn_openPathFinder
             // 
@@ -144,7 +144,7 @@ namespace GersangPatchMaster
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.btn_openPathFinder);
-            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.tb_gersangPath);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.btn_startPatch);
             this.Controls.Add(this.label1);
@@ -165,7 +165,7 @@ namespace GersangPatchMaster
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btn_startPatch;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox tb_gersangPath;
         private System.Windows.Forms.Button btn_openPathFinder;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;

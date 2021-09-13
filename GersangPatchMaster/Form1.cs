@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.FileIO;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -29,6 +30,7 @@ namespace GersangPatchMaster {
 
         private void Form1_Load(object sender, EventArgs e) {
             btn_startPatch.Enabled = false; //버전 확인을 해야 패치 시작이 가능합니다.
+            btn_applyPatch.Enabled = false; //패치 다운로드를 완료해야 패치 적용이 가능합니다.
         }
 
         //패치 버전 확인 버튼
@@ -74,7 +76,7 @@ namespace GersangPatchMaster {
                 // Releases the resources of the response.
                 myHttpWebResponse.Close();
             } catch(System.Net.WebException exception) {
-                MessageBox.Show("유효하지 않은 버전입니다. 거상 홈페이지 공지사항에 게시된 버전을 입력해주세요.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);  
+                MessageBox.Show("유효하지 않은 버전입니다. 아직 거상 서버에 업로드되지 않은 패치 버전입니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);  
                 Console.WriteLine(exception);
                 btn_startPatch.Enabled = false;
                 label2.Text = "선택 버전 : ";
@@ -82,6 +84,7 @@ namespace GersangPatchMaster {
                 return;
             }
 
+            btn_applyPatch.Enabled = false;
             btn_startPatch.Enabled = true;
             label2.Text = "선택 버전 : v" + version;
         }
@@ -103,8 +106,32 @@ namespace GersangPatchMaster {
 
         //패치 시작 확인 버튼
         private void btn_startPatch_Click(object sender, EventArgs e) {
+            //거상 경로 텍스트박스가 비어있는 경우
+            if(tb_gersangPath.TextLength == 0) {
+                MessageBox.Show("거상 경로를 지정해주세요.");
+                return;
+            }
+
+            //경로에 Gersang.exe파일이 없는 경우
+            if (Directory.GetFiles(tb_gersangPath.Text, "Gersang.exe", System.IO.SearchOption.TopDirectoryOnly).Length <= 0) {
+                MessageBox.Show("제대로 된 거상 경로를 지정해주세요. (Gersang.exe 파일이 있는 경로)");
+                return;
+            }
+
+            //다운로드 하는 동안 폼을 비활성화 시킵니다.
+            this.Enabled = false;
+
             patchFileCount = 0;
             downloadCompletedCount = 0;
+
+            //현재 버전 확인 코드 출처 : 기존 GersangPatcher 개발자분의 코드 
+            System.IO.FileStream fs = System.IO.File.OpenRead(tb_gersangPath.Text + "\\Online\\vsn.dat");
+            System.IO.BinaryReader br = new System.IO.BinaryReader(fs);
+            int currentVer = -(br.ReadInt32() + 1);
+            Console.WriteLine("현재 본클라 버전은? : " + currentVer);
+            fs.Close();
+            br.Close();
+            //
 
             //패치 정보 파일을 다운로드 한다.
             string patchInfoFilePath = patchInfoDir + @"\" + version; //패치 정보 파일이 저장될 위치와 파일명
@@ -153,25 +180,35 @@ namespace GersangPatchMaster {
             folderBrowserDialog1.ShowDialog();
 
             if ((folderBrowserDialog1.SelectedPath.Length) != 0) {
-                textBox2.Text = folderBrowserDialog1.SelectedPath;
+                tb_gersangPath.Text = folderBrowserDialog1.SelectedPath;
             }
         }
 
         private void btn_applyPatch_Click(object sender, EventArgs e) {
-            DirectoryInfo dirPath = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version + "_unpack");
+            DirectoryInfo dirPath = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
 
             //압축해제한 패치 파일을 지정한 경로의 본클라에 적용시킵니다.
-            applyPatchFileInDirectory(dirPath);
+            copyFolder(Application.StartupPath + '\\' + version, tb_gersangPath.Text);
+
+            MessageBox.Show("패치 적용이 완료되었습니다.");
         }
 
-        private void applyPatchFileInDirectory(DirectoryInfo directoryPath) {
-            foreach (DirectoryInfo dirInfo in directoryPath.GetDirectories()) {
-                applyPatchFileInDirectory(dirInfo);
+        //패치파일 거상경로에 복사-붙여놓기(덮어쓰기)
+        private void copyFolder(string srcPath, string destPath) {
+            int count = 0;
+
+            //Now Create all of the directories
+            foreach (string dirPath in Directory.GetDirectories(srcPath, "*", System.IO.SearchOption.AllDirectories))
+                Directory.CreateDirectory(dirPath.Replace(srcPath, destPath));
+
+            //Copy all the files & Replaces any files with the same name
+            foreach (string newPath in Directory.GetFiles(srcPath, "*.*", System.IO.SearchOption.AllDirectories)) {
+                File.Copy(newPath, newPath.Replace(srcPath, destPath), true);
+                count++;
             }
 
-            foreach (FileInfo fileInfo in directoryPath.GetFiles()) {
-                File.Copy(fileInfo.FullName, textBox2.Text + @"\" + fileInfo.Name, true);
-            }
+            Console.WriteLine("총 파일 복사 갯수 : " + count);
+            //FileSystem.CopyDirectory(srcPath, destPath, UIOption.AllDialogs);
         }
 
         //파일 다운로드 코드 (
@@ -186,7 +223,11 @@ namespace GersangPatchMaster {
                     Console.WriteLine("모든 패치파일 다운로드 및 압축해제 완료!");
                     sw.Stop();
                     Console.WriteLine("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과");
+
+                    this.Enabled = true;
+                    btn_applyPatch.Enabled = true;
                 }
+
                 return;
             }
 
@@ -219,6 +260,9 @@ namespace GersangPatchMaster {
                             Console.WriteLine("모든 패치파일 다운로드 및 압축해제 완료!");
                             sw.Stop();
                             Console.WriteLine("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과");
+
+                            this.Enabled = true;
+                            btn_applyPatch.Enabled = true;
                         }
                     }
                 };
