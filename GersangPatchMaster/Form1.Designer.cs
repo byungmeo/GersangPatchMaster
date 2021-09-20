@@ -47,12 +47,12 @@ namespace GersangPatchMaster
             this.radio_single = new System.Windows.Forms.RadioButton();
             this.radio_multi = new System.Windows.Forms.RadioButton();
             this.group_multiClientName = new System.Windows.Forms.GroupBox();
-            this.label_3client = new System.Windows.Forms.Label();
-            this.label_2client = new System.Windows.Forms.Label();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.check_third = new System.Windows.Forms.CheckBox();
+            this.check_second = new System.Windows.Forms.CheckBox();
+            this.tb_third = new System.Windows.Forms.TextBox();
+            this.tb_second = new System.Windows.Forms.TextBox();
             this.btn_patch = new System.Windows.Forms.Button();
-            this.check_keepFile = new System.Windows.Forms.CheckBox();
+            this.check_noApply = new System.Windows.Forms.CheckBox();
             this.check_shortcut = new System.Windows.Forms.CheckBox();
             this.pic_github = new System.Windows.Forms.PictureBox();
             this.linkLabel_github = new System.Windows.Forms.LinkLabel();
@@ -60,8 +60,7 @@ namespace GersangPatchMaster
             this.linkLabel_blog = new System.Windows.Forms.LinkLabel();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
-            this.check_oldVersion = new System.Windows.Forms.CheckBox();
-            this.label_debug = new System.Windows.Forms.Label();
+            this.rtb_logBox = new System.Windows.Forms.RichTextBox();
             this.group_selectServer.SuspendLayout();
             this.group_path.SuspendLayout();
             this.group_version.SuspendLayout();
@@ -154,7 +153,6 @@ namespace GersangPatchMaster
             this.group_selectServer.TabIndex = 12;
             this.group_selectServer.TabStop = false;
             this.group_selectServer.Text = "서버선택";
-            this.group_selectServer.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
             // group_path
             // 
@@ -180,7 +178,6 @@ namespace GersangPatchMaster
             this.group_version.TabIndex = 14;
             this.group_version.TabStop = false;
             this.group_version.Text = "패치버전";
-            this.group_version.Enter += new System.EventHandler(this.groupBox3_Enter);
             // 
             // label_frontVersionCount
             // 
@@ -210,7 +207,6 @@ namespace GersangPatchMaster
             this.group_multiClient.TabIndex = 15;
             this.group_multiClient.TabStop = false;
             this.group_multiClient.Text = "다클라 여부";
-            this.group_multiClient.Enter += new System.EventHandler(this.groupBox4_Enter);
             // 
             // radio_single
             // 
@@ -223,6 +219,7 @@ namespace GersangPatchMaster
             this.radio_single.TabStop = true;
             this.radio_single.Text = "1클라";
             this.radio_single.UseVisualStyleBackColor = true;
+            this.radio_single.Click += new System.EventHandler(this.radio_single_Click);
             // 
             // radio_multi
             // 
@@ -237,10 +234,11 @@ namespace GersangPatchMaster
             // 
             // group_multiClientName
             // 
-            this.group_multiClientName.Controls.Add(this.label_3client);
-            this.group_multiClientName.Controls.Add(this.label_2client);
-            this.group_multiClientName.Controls.Add(this.textBox2);
-            this.group_multiClientName.Controls.Add(this.textBox1);
+            this.group_multiClientName.Controls.Add(this.check_third);
+            this.group_multiClientName.Controls.Add(this.check_second);
+            this.group_multiClientName.Controls.Add(this.tb_third);
+            this.group_multiClientName.Controls.Add(this.tb_second);
+            this.group_multiClientName.Enabled = false;
             this.group_multiClientName.Location = new System.Drawing.Point(109, 292);
             this.group_multiClientName.Name = "group_multiClientName";
             this.group_multiClientName.Size = new System.Drawing.Size(226, 89);
@@ -248,37 +246,45 @@ namespace GersangPatchMaster
             this.group_multiClientName.TabStop = false;
             this.group_multiClientName.Text = "다클라 폴더 이름";
             // 
-            // label_3client
+            // check_third
             // 
-            this.label_3client.AutoSize = true;
-            this.label_3client.Location = new System.Drawing.Point(13, 58);
-            this.label_3client.Name = "label_3client";
-            this.label_3client.Size = new System.Drawing.Size(35, 12);
-            this.label_3client.TabIndex = 3;
-            this.label_3client.Text = "3클라";
+            this.check_third.AutoSize = true;
+            this.check_third.Checked = true;
+            this.check_third.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.check_third.Location = new System.Drawing.Point(6, 56);
+            this.check_third.Name = "check_third";
+            this.check_third.Size = new System.Drawing.Size(54, 16);
+            this.check_third.TabIndex = 5;
+            this.check_third.Text = "3클라";
+            this.check_third.UseVisualStyleBackColor = true;
+            this.check_third.CheckedChanged += new System.EventHandler(this.check_third_CheckedChanged);
             // 
-            // label_2client
+            // check_second
             // 
-            this.label_2client.AutoSize = true;
-            this.label_2client.Location = new System.Drawing.Point(13, 28);
-            this.label_2client.Name = "label_2client";
-            this.label_2client.Size = new System.Drawing.Size(35, 12);
-            this.label_2client.TabIndex = 2;
-            this.label_2client.Text = "2클라";
+            this.check_second.AutoSize = true;
+            this.check_second.Checked = true;
+            this.check_second.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.check_second.Location = new System.Drawing.Point(6, 28);
+            this.check_second.Name = "check_second";
+            this.check_second.Size = new System.Drawing.Size(54, 16);
+            this.check_second.TabIndex = 4;
+            this.check_second.Text = "2클라";
+            this.check_second.UseVisualStyleBackColor = true;
+            this.check_second.CheckedChanged += new System.EventHandler(this.check_second_CheckedChanged);
             // 
-            // textBox2
+            // tb_third
             // 
-            this.textBox2.Location = new System.Drawing.Point(60, 51);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(151, 21);
-            this.textBox2.TabIndex = 1;
+            this.tb_third.Location = new System.Drawing.Point(66, 54);
+            this.tb_third.Name = "tb_third";
+            this.tb_third.Size = new System.Drawing.Size(152, 21);
+            this.tb_third.TabIndex = 1;
             // 
-            // textBox1
+            // tb_second
             // 
-            this.textBox1.Location = new System.Drawing.Point(60, 24);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(151, 21);
-            this.textBox1.TabIndex = 0;
+            this.tb_second.Location = new System.Drawing.Point(66, 26);
+            this.tb_second.Name = "tb_second";
+            this.tb_second.Size = new System.Drawing.Size(152, 21);
+            this.tb_second.TabIndex = 0;
             // 
             // btn_patch
             // 
@@ -288,16 +294,17 @@ namespace GersangPatchMaster
             this.btn_patch.TabIndex = 17;
             this.btn_patch.Text = "패치 시작";
             this.btn_patch.UseVisualStyleBackColor = true;
+            this.btn_patch.Click += new System.EventHandler(this.btn_patch_Click);
             // 
-            // check_keepFile
+            // check_noApply
             // 
-            this.check_keepFile.AutoSize = true;
-            this.check_keepFile.Location = new System.Drawing.Point(13, 398);
-            this.check_keepFile.Name = "check_keepFile";
-            this.check_keepFile.Size = new System.Drawing.Size(104, 16);
-            this.check_keepFile.TabIndex = 18;
-            this.check_keepFile.Text = "패치 수동 적용";
-            this.check_keepFile.UseVisualStyleBackColor = true;
+            this.check_noApply.AutoSize = true;
+            this.check_noApply.Location = new System.Drawing.Point(13, 398);
+            this.check_noApply.Name = "check_noApply";
+            this.check_noApply.Size = new System.Drawing.Size(104, 16);
+            this.check_noApply.TabIndex = 18;
+            this.check_noApply.Text = "패치 수동 적용";
+            this.check_noApply.UseVisualStyleBackColor = true;
             // 
             // check_shortcut
             // 
@@ -328,6 +335,7 @@ namespace GersangPatchMaster
             this.linkLabel_github.TabIndex = 21;
             this.linkLabel_github.TabStop = true;
             this.linkLabel_github.Text = "GitHub";
+            this.linkLabel_github.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel_github_LinkClicked);
             // 
             // pic_naver
             // 
@@ -348,6 +356,7 @@ namespace GersangPatchMaster
             this.linkLabel_blog.TabIndex = 23;
             this.linkLabel_blog.TabStop = true;
             this.linkLabel_blog.Text = "Blog";
+            this.linkLabel_blog.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel_blog_LinkClicked);
             // 
             // label8
             // 
@@ -356,8 +365,7 @@ namespace GersangPatchMaster
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(37, 12);
             this.label8.TabIndex = 24;
-            this.label8.Text = "v1.0.0";
-            this.label8.Click += new System.EventHandler(this.label8_Click);
+            this.label8.Text = "v0.0.2";
             // 
             // label9
             // 
@@ -368,33 +376,22 @@ namespace GersangPatchMaster
             this.label9.TabIndex = 25;
             this.label9.Text = "Made By byungmeo";
             // 
-            // check_oldVersion
+            // rtb_logBox
             // 
-            this.check_oldVersion.AutoSize = true;
-            this.check_oldVersion.Location = new System.Drawing.Point(202, 31);
-            this.check_oldVersion.Name = "check_oldVersion";
-            this.check_oldVersion.Size = new System.Drawing.Size(133, 16);
-            this.check_oldVersion.TabIndex = 26;
-            this.check_oldVersion.Text = "구버전 허용(debug)";
-            this.check_oldVersion.UseVisualStyleBackColor = true;
-            // 
-            // label_debug
-            // 
-            this.label_debug.AutoSize = true;
-            this.label_debug.Location = new System.Drawing.Point(122, 475);
-            this.label_debug.Name = "label_debug";
-            this.label_debug.Size = new System.Drawing.Size(38, 12);
-            this.label_debug.TabIndex = 27;
-            this.label_debug.Text = "label1";
+            this.rtb_logBox.Font = new System.Drawing.Font("Consolas", 8F);
+            this.rtb_logBox.Location = new System.Drawing.Point(351, 12);
+            this.rtb_logBox.Name = "rtb_logBox";
+            this.rtb_logBox.Size = new System.Drawing.Size(346, 506);
+            this.rtb_logBox.TabIndex = 29;
+            this.rtb_logBox.Text = "";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(347, 528);
-            this.Controls.Add(this.label_debug);
-            this.Controls.Add(this.check_oldVersion);
+            this.ClientSize = new System.Drawing.Size(714, 528);
+            this.Controls.Add(this.rtb_logBox);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.linkLabel_blog);
@@ -402,7 +399,7 @@ namespace GersangPatchMaster
             this.Controls.Add(this.linkLabel_github);
             this.Controls.Add(this.pic_github);
             this.Controls.Add(this.check_shortcut);
-            this.Controls.Add(this.check_keepFile);
+            this.Controls.Add(this.check_noApply);
             this.Controls.Add(this.btn_patch);
             this.Controls.Add(this.group_multiClientName);
             this.Controls.Add(this.group_multiClient);
@@ -448,12 +445,10 @@ namespace GersangPatchMaster
         private System.Windows.Forms.RadioButton radio_single;
         private System.Windows.Forms.RadioButton radio_multi;
         private System.Windows.Forms.GroupBox group_multiClientName;
-        private System.Windows.Forms.Label label_3client;
-        private System.Windows.Forms.Label label_2client;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox tb_third;
+        private System.Windows.Forms.TextBox tb_second;
         private System.Windows.Forms.Button btn_patch;
-        private System.Windows.Forms.CheckBox check_keepFile;
+        private System.Windows.Forms.CheckBox check_noApply;
         private System.Windows.Forms.CheckBox check_shortcut;
         private System.Windows.Forms.PictureBox pic_github;
         private System.Windows.Forms.LinkLabel linkLabel_github;
@@ -461,8 +456,9 @@ namespace GersangPatchMaster
         private System.Windows.Forms.LinkLabel linkLabel_blog;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.CheckBox check_oldVersion;
-        private System.Windows.Forms.Label label_debug;
+        private System.Windows.Forms.CheckBox check_third;
+        private System.Windows.Forms.CheckBox check_second;
+        private System.Windows.Forms.RichTextBox rtb_logBox;
     }
 }
 
