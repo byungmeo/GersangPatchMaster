@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -40,12 +39,11 @@ namespace GersangPatchMaster {
             else
                 patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/";
 
+            tb_gersangPath.Text = @"G:\AKInteractive\Gersang";
             label_patchDate.Text = "";
             label_frontVersionCount.Text = "";
-            btn_startPatch.Enabled = false; //버전 확인을 해야 패치 시작이 가능합니다.
-            btn_applyPatch.Enabled = false; //패치 다운로드를 완료해야 패치 적용이 가능합니다.
 
-            //거상 설치 경로가 유효한지 확인합니다.
+            //저장되어있는 거상 설치 경로가 유효한지 확인합니다.
         }
 
         //////////////////
@@ -107,6 +105,26 @@ namespace GersangPatchMaster {
                 return;
             }
 
+            //현재 거상 버전을 확인합니다
+            FileStream fs = System.IO.File.OpenRead(tb_gersangPath.Text + @"/Online/vsn.dat");
+            BinaryReader br = new System.IO.BinaryReader(fs);
+            int currentVer = -(br.ReadInt32() + 1);
+            label_currentVersion.Text = "현재 거상 버전 : " + currentVer;
+            Console.WriteLine("현재 본클라 버전은? : " + currentVer);
+            fs.Close();
+            br.Close();
+            //
+
+            //같은 버전 예외 처리는 게시날짜 확인 후 진행
+            if (Int16.Parse(version) < currentVer) {
+                MessageBox.Show("구버전 입니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                if(!check_oldVersion.Checked)
+                    return;
+            }
+
+            label_frontVersionCount.Text = version + "->" + currentVer;
+
             //해당 패치 버전이 언제 거상 패치 서버에 게시된 것인지 확인합니다.
             try {
                 Uri myUri = new Uri(patchUrl + @"Client_info_File/" + version);
@@ -127,6 +145,7 @@ namespace GersangPatchMaster {
                 }
 
                 infoUrl = myUri;
+
                 // Releases the resources of the response.
                 myHttpWebResponse.Close();
             } catch(System.Net.WebException exception) {
@@ -134,12 +153,58 @@ namespace GersangPatchMaster {
                     , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);  
 
                 Console.WriteLine(exception);
-                btn_startPatch.Enabled = false;
                 return;
             }
 
-            btn_applyPatch.Enabled = false;
-            btn_startPatch.Enabled = true;
+            if (Int16.Parse(version) == currentVer) {
+                //같은 버전이라도 서버점검 끝나기 전 파일 바꿔치기 하는 경우 있으므로, 물어봄
+                DialogResult dr = MessageBox.Show("현재 설치된 버전과 동일한 버전입니다. 그래도 설치하시겠습니까?\n" +
+                    "거상 점검이 끝나기전 미리 패치를 다운받으실 때,\n" +
+                    "AK측에서 가끔 파일을 바꾸는 경우가 있습니다.", "똑같은 버전", MessageBoxButtons.YesNo);
+
+                if (dr == DialogResult.No) {
+                    return;
+                } else {
+                    /*
+                    System.Net.WebClient tempWebClient = new System.Net.WebClient();
+                    tempWebClient.Headers.Add("User-Agent", "Run");
+                    string downloadUrl = patchUrl + @"Client_info_File/" + version;
+                    tempWebClient.DownloadFile(new Uri(downloadUrl), patchInfoDir + @"\" + version + ".txt");
+                    return;
+                    */
+                }
+            }
+
+            //최종 버전까지 필요한 패치 정보 파일을 모두 다운받습니다. (구버전 배려)
+            System.Net.WebClient webClient = new System.Net.WebClient();
+            webClient.Headers.Add("User-Agent", "Run");
+
+            int patchCount = 0;
+            for (int i = 30414 + 1; i <= Int16.Parse(version); i++) {
+                string downloadUrl = patchUrl + @"Client_info_File/" + i;
+                try {
+                    webClient.DownloadFile(new Uri(downloadUrl), patchInfoDir + @"\" + i + ".txt");
+                    label_debug.Text = i + " 버전 패치정보 파일 다운로드 성공\r\n";
+
+                    /*
+                    txt_LogBox.Text += i + " 버전 패치파일 다운로드 및 압축해제 시작\r\n";
+                    DownloadPatchFiles(i - 1, i);
+                    txt_LogBox.Text += i + " 버전 패치파일 다운로드 및 압축해제 완료\r\n";
+                    */
+                    patchCount++;
+                } catch (Exception err) {
+                    //패치파일이 존재하지 않으므로 다음으로 진행
+                }
+            }
+
+            label_frontVersionCount.Text = currentVer + "->" + version + " (총 " + patchCount + "번의 패치가 존재합니다.)";
+
+            //몇번의 패치가 존재하든, 한꺼번에 패치하기위해 패치정보파일을 새로 만듭니다.
+            if(patchCount > 1) {
+                using (StreamWriter wr = new StreamWriter(Application.StartupPath + @"\PatchInfoFiles\" + 30414 + "-" + version + ".txt")) {
+                    wr.WriteLine("Hello World!");
+                }
+            }
         }
 
         private void tb_version_KeyPress(object sender, KeyPressEventArgs e) {
@@ -288,7 +353,6 @@ namespace GersangPatchMaster {
                     Console.WriteLine("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과");
 
                     this.Enabled = true;
-                    btn_applyPatch.Enabled = true;
                 }
 
                 return;
@@ -325,7 +389,6 @@ namespace GersangPatchMaster {
                             Console.WriteLine("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과");
 
                             this.Enabled = true;
-                            btn_applyPatch.Enabled = true;
                         }
                     }
                 };
@@ -351,6 +414,8 @@ namespace GersangPatchMaster {
 
         }
 
-        
+        private void label8_Click(object sender, EventArgs e) {
+
+        }
     }
 }

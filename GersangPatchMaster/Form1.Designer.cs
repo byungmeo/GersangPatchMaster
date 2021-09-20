@@ -33,18 +33,16 @@ namespace GersangPatchMaster
             this.btn_checkVersion = new System.Windows.Forms.Button();
             this.tb_version = new System.Windows.Forms.TextBox();
             this.label_patchDate = new System.Windows.Forms.Label();
-            this.btn_startPatch = new System.Windows.Forms.Button();
             this.tb_gersangPath = new System.Windows.Forms.TextBox();
             this.btn_openPathFinder = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.btn_applyPatch = new System.Windows.Forms.Button();
             this.radio_mainServer = new System.Windows.Forms.RadioButton();
             this.radio_testServer = new System.Windows.Forms.RadioButton();
             this.group_selectServer = new System.Windows.Forms.GroupBox();
             this.group_path = new System.Windows.Forms.GroupBox();
             this.group_version = new System.Windows.Forms.GroupBox();
             this.label_frontVersionCount = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
+            this.label_currentVersion = new System.Windows.Forms.Label();
             this.group_multiClient = new System.Windows.Forms.GroupBox();
             this.radio_single = new System.Windows.Forms.RadioButton();
             this.radio_multi = new System.Windows.Forms.RadioButton();
@@ -62,6 +60,8 @@ namespace GersangPatchMaster
             this.linkLabel_blog = new System.Windows.Forms.LinkLabel();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
+            this.check_oldVersion = new System.Windows.Forms.CheckBox();
+            this.label_debug = new System.Windows.Forms.Label();
             this.group_selectServer.SuspendLayout();
             this.group_path.SuspendLayout();
             this.group_version.SuspendLayout();
@@ -100,16 +100,6 @@ namespace GersangPatchMaster
             this.label_patchDate.TabIndex = 2;
             this.label_patchDate.Text = "(hide) 패치게시날짜";
             // 
-            // btn_startPatch
-            // 
-            this.btn_startPatch.Location = new System.Drawing.Point(30, 592);
-            this.btn_startPatch.Name = "btn_startPatch";
-            this.btn_startPatch.Size = new System.Drawing.Size(75, 23);
-            this.btn_startPatch.TabIndex = 3;
-            this.btn_startPatch.Text = "패치 다운";
-            this.btn_startPatch.UseVisualStyleBackColor = true;
-            this.btn_startPatch.Click += new System.EventHandler(this.btn_startPatch_Click);
-            // 
             // tb_gersangPath
             // 
             this.tb_gersangPath.Location = new System.Drawing.Point(17, 25);
@@ -129,16 +119,6 @@ namespace GersangPatchMaster
             this.btn_openPathFinder.Text = "...";
             this.btn_openPathFinder.UseVisualStyleBackColor = true;
             this.btn_openPathFinder.Click += new System.EventHandler(this.btn_openPathFinder_Click);
-            // 
-            // btn_applyPatch
-            // 
-            this.btn_applyPatch.Location = new System.Drawing.Point(29, 563);
-            this.btn_applyPatch.Name = "btn_applyPatch";
-            this.btn_applyPatch.Size = new System.Drawing.Size(75, 23);
-            this.btn_applyPatch.TabIndex = 9;
-            this.btn_applyPatch.Text = "패치 적용";
-            this.btn_applyPatch.UseVisualStyleBackColor = true;
-            this.btn_applyPatch.Click += new System.EventHandler(this.btn_applyPatch_Click);
             // 
             // radio_mainServer
             // 
@@ -190,7 +170,7 @@ namespace GersangPatchMaster
             // group_version
             // 
             this.group_version.Controls.Add(this.label_frontVersionCount);
-            this.group_version.Controls.Add(this.label5);
+            this.group_version.Controls.Add(this.label_currentVersion);
             this.group_version.Controls.Add(this.tb_version);
             this.group_version.Controls.Add(this.btn_checkVersion);
             this.group_version.Controls.Add(this.label_patchDate);
@@ -211,14 +191,14 @@ namespace GersangPatchMaster
             this.label_frontVersionCount.TabIndex = 4;
             this.label_frontVersionCount.Text = "(hide) 00000->00000 (총 0개의 패치가 존재합니다)";
             // 
-            // label5
+            // label_currentVersion
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(15, 78);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(93, 12);
-            this.label5.TabIndex = 3;
-            this.label5.Text = "현재 거상 버전 :";
+            this.label_currentVersion.AutoSize = true;
+            this.label_currentVersion.Location = new System.Drawing.Point(15, 78);
+            this.label_currentVersion.Name = "label_currentVersion";
+            this.label_currentVersion.Size = new System.Drawing.Size(93, 12);
+            this.label_currentVersion.TabIndex = 3;
+            this.label_currentVersion.Text = "현재 거상 버전 :";
             // 
             // group_multiClient
             // 
@@ -308,16 +288,15 @@ namespace GersangPatchMaster
             this.btn_patch.TabIndex = 17;
             this.btn_patch.Text = "패치 시작";
             this.btn_patch.UseVisualStyleBackColor = true;
-            this.btn_patch.Click += new System.EventHandler(this.button1_Click);
             // 
             // check_keepFile
             // 
             this.check_keepFile.AutoSize = true;
             this.check_keepFile.Location = new System.Drawing.Point(13, 398);
             this.check_keepFile.Name = "check_keepFile";
-            this.check_keepFile.Size = new System.Drawing.Size(100, 16);
+            this.check_keepFile.Size = new System.Drawing.Size(104, 16);
             this.check_keepFile.TabIndex = 18;
-            this.check_keepFile.Text = "패치파일 유지";
+            this.check_keepFile.Text = "패치 수동 적용";
             this.check_keepFile.UseVisualStyleBackColor = true;
             // 
             // check_shortcut
@@ -333,7 +312,7 @@ namespace GersangPatchMaster
             // pic_github
             // 
             this.pic_github.Image = ((System.Drawing.Image)(resources.GetObject("pic_github.Image")));
-            this.pic_github.Location = new System.Drawing.Point(6, 505);
+            this.pic_github.Location = new System.Drawing.Point(6, 502);
             this.pic_github.Name = "pic_github";
             this.pic_github.Size = new System.Drawing.Size(16, 16);
             this.pic_github.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -343,7 +322,7 @@ namespace GersangPatchMaster
             // linkLabel_github
             // 
             this.linkLabel_github.AutoSize = true;
-            this.linkLabel_github.Location = new System.Drawing.Point(28, 509);
+            this.linkLabel_github.Location = new System.Drawing.Point(28, 506);
             this.linkLabel_github.Name = "linkLabel_github";
             this.linkLabel_github.Size = new System.Drawing.Size(42, 12);
             this.linkLabel_github.TabIndex = 21;
@@ -353,7 +332,7 @@ namespace GersangPatchMaster
             // pic_naver
             // 
             this.pic_naver.Image = ((System.Drawing.Image)(resources.GetObject("pic_naver.Image")));
-            this.pic_naver.Location = new System.Drawing.Point(6, 483);
+            this.pic_naver.Location = new System.Drawing.Point(6, 475);
             this.pic_naver.Name = "pic_naver";
             this.pic_naver.Size = new System.Drawing.Size(16, 16);
             this.pic_naver.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -363,7 +342,7 @@ namespace GersangPatchMaster
             // linkLabel_blog
             // 
             this.linkLabel_blog.AutoSize = true;
-            this.linkLabel_blog.Location = new System.Drawing.Point(28, 487);
+            this.linkLabel_blog.Location = new System.Drawing.Point(28, 479);
             this.linkLabel_blog.Name = "linkLabel_blog";
             this.linkLabel_blog.Size = new System.Drawing.Size(30, 12);
             this.linkLabel_blog.TabIndex = 23;
@@ -373,27 +352,49 @@ namespace GersangPatchMaster
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(298, 487);
+            this.label8.Location = new System.Drawing.Point(298, 479);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(37, 12);
             this.label8.TabIndex = 24;
             this.label8.Text = "v1.0.0";
+            this.label8.Click += new System.EventHandler(this.label8_Click);
             // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(215, 509);
+            this.label9.Location = new System.Drawing.Point(215, 506);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(120, 12);
             this.label9.TabIndex = 25;
             this.label9.Text = "Made By byungmeo";
+            // 
+            // check_oldVersion
+            // 
+            this.check_oldVersion.AutoSize = true;
+            this.check_oldVersion.Location = new System.Drawing.Point(202, 31);
+            this.check_oldVersion.Name = "check_oldVersion";
+            this.check_oldVersion.Size = new System.Drawing.Size(133, 16);
+            this.check_oldVersion.TabIndex = 26;
+            this.check_oldVersion.Text = "구버전 허용(debug)";
+            this.check_oldVersion.UseVisualStyleBackColor = true;
+            // 
+            // label_debug
+            // 
+            this.label_debug.AutoSize = true;
+            this.label_debug.Location = new System.Drawing.Point(122, 475);
+            this.label_debug.Name = "label_debug";
+            this.label_debug.Size = new System.Drawing.Size(38, 12);
+            this.label_debug.TabIndex = 27;
+            this.label_debug.Text = "label1";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(347, 644);
+            this.ClientSize = new System.Drawing.Size(347, 528);
+            this.Controls.Add(this.label_debug);
+            this.Controls.Add(this.check_oldVersion);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.linkLabel_blog);
@@ -408,8 +409,6 @@ namespace GersangPatchMaster
             this.Controls.Add(this.group_version);
             this.Controls.Add(this.group_path);
             this.Controls.Add(this.group_selectServer);
-            this.Controls.Add(this.btn_applyPatch);
-            this.Controls.Add(this.btn_startPatch);
             this.Name = "Form1";
             this.Text = "GersangPatchMaster";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -435,17 +434,15 @@ namespace GersangPatchMaster
         private System.Windows.Forms.Button btn_checkVersion;
         private System.Windows.Forms.TextBox tb_version;
         private System.Windows.Forms.Label label_patchDate;
-        private System.Windows.Forms.Button btn_startPatch;
         private System.Windows.Forms.TextBox tb_gersangPath;
         private System.Windows.Forms.Button btn_openPathFinder;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
-        private System.Windows.Forms.Button btn_applyPatch;
         private System.Windows.Forms.RadioButton radio_mainServer;
         private System.Windows.Forms.RadioButton radio_testServer;
         private System.Windows.Forms.GroupBox group_selectServer;
         private System.Windows.Forms.GroupBox group_path;
         private System.Windows.Forms.GroupBox group_version;
-        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label_currentVersion;
         private System.Windows.Forms.Label label_frontVersionCount;
         private System.Windows.Forms.GroupBox group_multiClient;
         private System.Windows.Forms.RadioButton radio_single;
@@ -464,6 +461,8 @@ namespace GersangPatchMaster
         private System.Windows.Forms.LinkLabel linkLabel_blog;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.CheckBox check_oldVersion;
+        private System.Windows.Forms.Label label_debug;
     }
 }
 
