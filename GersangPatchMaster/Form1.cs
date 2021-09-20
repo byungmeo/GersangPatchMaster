@@ -8,18 +8,24 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
-
+using SearchOption = System.IO.SearchOption;
 
 namespace GersangPatchMaster {
     public partial class Form1 : Form {
+        //
         private string patchInfoDir;
         private Uri infoUrl;
         private string version;
         private int patchFileCount;
         private int downloadCompletedCount;
         private Stopwatch sw;
+        //
+
+        private string patchUrl;
 
         public Form1() {
+            this.MaximizeBox = false;
+
             //프로그램 실행시 Data 폴더 확인 및 없을경우 Data 폴더 생성
             System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(Application.StartupPath + @"\PatchInfoFiles");
             if (!di.Exists) { di.Create(); }
@@ -29,16 +35,68 @@ namespace GersangPatchMaster {
         }
 
         private void Form1_Load(object sender, EventArgs e) {
+            if (radio_testServer.Checked)
+                patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Test_Server/";
+            else
+                patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/";
+
+            label_patchDate.Text = "";
+            label_frontVersionCount.Text = "";
             btn_startPatch.Enabled = false; //버전 확인을 해야 패치 시작이 가능합니다.
             btn_applyPatch.Enabled = false; //패치 다운로드를 완료해야 패치 적용이 가능합니다.
+
+            //거상 설치 경로가 유효한지 확인합니다.
         }
 
-        //패치 버전 확인 버튼
+        //////////////////
+        //서버 선택 그룹//
+        //////////////////
+        private void radio_mainServer_Click(object sender, EventArgs e) {
+            this.patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/";
+        }
+
+        private void radio_testServer_Click(object sender, EventArgs e) {
+            this.patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Test_Server/";
+        }
+
+        //////////////////
+        //거상 경로 그룹//
+        //////////////////
+        private void btn_openPathFinder_Click(object sender, EventArgs e) {
+            folderBrowserDialog1.SelectedPath = null;
+            folderBrowserDialog1.ShowDialog(); //PathFinder 열기
+
+            string selectedPath = folderBrowserDialog1.SelectedPath;
+
+            try {
+                //Gersang.exe 파일이 없는 경우 거상 폴더가 아니라고 메시지를 띄웁니다.
+                if (Directory.GetFiles(selectedPath, "Gersang.exe", SearchOption.TopDirectoryOnly).Length <= 0) {
+                    MessageBox.Show("제대로 된 거상 경로를 지정해주세요. (Gersang.exe 파일이 있는 경로)"
+                        , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                    return;
+                }
+            } catch(Exception ex) {
+                MessageBox.Show(ex.Message);
+            }
+            
+            tb_gersangPath.Text = folderBrowserDialog1.SelectedPath;
+        }
+
+        //////////////////
+        //패치버전  그룹//
+        //////////////////
         private void btn_checkVersion_Click(object sender, EventArgs e) {
+            //거상 설치 경로를 지정하지 않은 경우
+            if(tb_gersangPath.TextLength == 0) {
+                MessageBox.Show("거상 설치 경로를 지정해주세요.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
+
             version = tb_version.Text;
 
-            //패치버전을 입력하지 않았다면 메시지를 출력합니다.
-            if(string.IsNullOrEmpty(version)) {
+            //패치버전을 입력하지 않은 경우
+            if (string.IsNullOrEmpty(version)) {
                 MessageBox.Show("패치버전을 입력해주세요.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
@@ -51,9 +109,8 @@ namespace GersangPatchMaster {
 
             //해당 패치 버전이 언제 거상 패치 서버에 게시된 것인지 확인합니다.
             try {
-                //코드 출처 : https://docs.microsoft.com/ko-kr/dotnet/api/system.exception?view=net-5.0
+                Uri myUri = new Uri(patchUrl + @"Client_info_File/" + version);
 
-                Uri myUri = new Uri(@"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/Client_info_File/" + version);
                 // Creates an HttpWebRequest for the specified URL.
                 HttpWebRequest myHttpWebRequest = (HttpWebRequest)WebRequest.Create(myUri);
                 HttpWebResponse myHttpWebResponse = (HttpWebResponse)myHttpWebRequest.GetResponse();
@@ -62,13 +119,10 @@ namespace GersangPatchMaster {
 
                 // Uses the LastModified property to compare with today's date.
                 if (DateTime.Compare(today, myHttpWebResponse.LastModified) == 0) {
-                    Console.WriteLine("\nThe requested URI entity was modified today");
-                    label1.Text = "오늘 게시된 업데이트입니다.";
+                    label_patchDate.Text = "오늘 게시된 업데이트입니다.";
                 } else {
                     if (DateTime.Compare(today, myHttpWebResponse.LastModified) == 1) {
-                        Console.WriteLine("\nThe requested URI was last modified on:{0}",
-                                            myHttpWebResponse.LastModified);
-                        label1.Text = myHttpWebResponse.LastModified.ToString() + "\n에 게시된 업데이트입니다.";
+                        label_patchDate.Text = "패치 게시날짜 : \n" + myHttpWebResponse.LastModified.ToString();
                     }
                 }
 
@@ -76,17 +130,16 @@ namespace GersangPatchMaster {
                 // Releases the resources of the response.
                 myHttpWebResponse.Close();
             } catch(System.Net.WebException exception) {
-                MessageBox.Show("유효하지 않은 버전입니다. 아직 거상 서버에 업로드되지 않은 패치 버전입니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);  
+                MessageBox.Show("존재하지 않는 버전입니다. 다른 버전을 입력해주세요."
+                    , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);  
+
                 Console.WriteLine(exception);
                 btn_startPatch.Enabled = false;
-                label2.Text = "선택 버전 : ";
-                label1.Text = "패치 버전을 확인해주세요.";
                 return;
             }
 
             btn_applyPatch.Enabled = false;
             btn_startPatch.Enabled = true;
-            label2.Text = "선택 버전 : v" + version;
         }
 
         private void tb_version_KeyPress(object sender, KeyPressEventArgs e) {
@@ -104,6 +157,23 @@ namespace GersangPatchMaster {
             }
         }
 
+        //////////////////
+        //다클라여부그룹//
+        //////////////////
+        private void radio_multi_Click(object sender, EventArgs e) {
+            //현재 거상 설치 경로가 NTFS인지 확인
+            //띄어쓰기 확인??(안해도 됨)
+        }
+
+        //////////////////
+        //다클폴더  그룹//
+        //////////////////
+
+
+
+        //////////////////
+        //그룹없는컨트롤//
+        //////////////////
         //패치 시작 확인 버튼
         private void btn_startPatch_Click(object sender, EventArgs e) {
             //거상 경로 텍스트박스가 비어있는 경우
@@ -175,14 +245,7 @@ namespace GersangPatchMaster {
             }
         }
 
-        private void btn_openPathFinder_Click(object sender, EventArgs e) {
-            folderBrowserDialog1.SelectedPath = null;
-            folderBrowserDialog1.ShowDialog();
-
-            if ((folderBrowserDialog1.SelectedPath.Length) != 0) {
-                tb_gersangPath.Text = folderBrowserDialog1.SelectedPath;
-            }
-        }
+        
 
         private void btn_applyPatch_Click(object sender, EventArgs e) {
             DirectoryInfo dirPath = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
@@ -271,5 +334,23 @@ namespace GersangPatchMaster {
                 client.DownloadFileAsync(downloadUrl, filePath);
             }
         }
+
+        private void groupBox1_Enter(object sender, EventArgs e) {
+
+        }
+
+        private void groupBox3_Enter(object sender, EventArgs e) {
+
+        }
+
+        private void groupBox4_Enter(object sender, EventArgs e) {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e) {
+
+        }
+
+        
     }
 }
