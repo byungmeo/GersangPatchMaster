@@ -1,7 +1,4 @@
 # GersangPatchMaster
-
-남은거 : 
-
-업데이트 기능
-
-클라 적용 기능
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/byungmeo/GersangPatchMaster)
+![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/byungmeo/GersangPatchMaster)
+![GitHub all releases](https://img.shields.io/github/downloads/byungmeo/GersangPatchMaster/total?color=red)
