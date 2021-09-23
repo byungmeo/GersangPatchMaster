@@ -224,6 +224,7 @@ namespace GersangPatchMaster
             // radio_multi
             // 
             this.radio_multi.AutoSize = true;
+            this.radio_multi.Enabled = false;
             this.radio_multi.Location = new System.Drawing.Point(17, 56);
             this.radio_multi.Name = "radio_multi";
             this.radio_multi.Size = new System.Drawing.Size(53, 16);
@@ -361,11 +362,11 @@ namespace GersangPatchMaster
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(298, 479);
+            this.label8.Location = new System.Drawing.Point(290, 479);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(37, 12);
             this.label8.TabIndex = 24;
-            this.label8.Text = "v0.0.2";
+            this.label8.Text = "v1.0.0";
             // 
             // label9
             // 
@@ -406,7 +407,9 @@ namespace GersangPatchMaster
             this.Controls.Add(this.group_version);
             this.Controls.Add(this.group_path);
             this.Controls.Add(this.group_selectServer);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "GersangPatchMaster";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.group_selectServer.ResumeLayout(false);

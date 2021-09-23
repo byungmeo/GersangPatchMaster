@@ -1,14 +1,15 @@
 ﻿using IWshRuntimeLibrary;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
+using Application = System.Windows.Forms.Application;
 using SearchOption = System.IO.SearchOption;
 
 namespace GersangPatchMaster {
@@ -27,6 +28,8 @@ namespace GersangPatchMaster {
         private bool isVersionChecked;
 
         public Form1() {
+            checkUpdate();
+
             this.MaximizeBox = false;
             isVersionChecked = false;
 
@@ -38,27 +41,123 @@ namespace GersangPatchMaster {
             InitializeComponent();
         }
 
+        private async void checkUpdate() {
+            try {
+                //Get all releases from GitHub
+                //Source: https://octokitnet.readthedocs.io/en/latest/getting-started/
+                GitHubClient client = new GitHubClient(new ProductHeaderValue("Byungmeo"));
+                IReadOnlyList<Release> releases = await client.Repository.Release.GetAll("byungmeo", "GersangPatchMaster");
+                //Setup the versions
+                Version latestGitHubVersion = new Version(releases[0].TagName);
+                Version localVersion = new Version("1.0.0"); //Replace this with your local version. 
+                                                             //Only tested with numeric values.
+
+                Console.WriteLine("깃허브에 마지막으로 게시된 버전 : " + latestGitHubVersion);
+                //Compare the Versions
+                //Source: https://stackoverflow.com/questions/7568147/compare-version-numbers-without-using-split-function
+                int versionComparison = localVersion.CompareTo(latestGitHubVersion);
+                if (versionComparison < 0) {
+                    //The version on GitHub is more up to date than this local release.
+                    Console.WriteLine("구버전입니다! 업데이트 메시지박스를 출력합니다!");
+
+                    DialogResult dr = MessageBox.Show(releases[0].Body + "\n\n업데이트 하시겠습니까? (GitHub 접속)",
+                        "업데이트 안내", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+                    if(dr == DialogResult.Yes) {
+                        System.Diagnostics.Process.Start("https://github.com/byungmeo/GersangPatchMaster/releases/latest");
+                    }
+                } else if (versionComparison > 0) {
+                    //This local version is greater than the release version on GitHub.
+                    Console.WriteLine("깃허브에 릴리즈된 버전보다 최신입니다!");
+                } else {
+                    //This local Version and the Version on GitHub are equal.
+                    Console.WriteLine("현재 버전은 최신버전입니다!");
+                }
+            } catch (Exception ex) {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
         private void Form1_Load(object sender, EventArgs e) {
+            label_patchDate.Text = "";
+            label_frontVersionCount.Text = "";
+
+            bool isTestServer = Properties.Settings.Default.isTestServer;
+            string gersangPath = Properties.Settings.Default.gersangPath;
+
+            if (isTestServer)
+                radio_testServer.PerformClick();
+            else
+                radio_mainServer.PerformClick();
+
             if (radio_testServer.Checked)
                 patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Test_Server/";
             else
                 patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/";
 
-            label_patchDate.Text = "";
-            label_frontVersionCount.Text = "";
+            if(gersangPath.Length != 0) {
+                try {
+                    if (Directory.GetFiles(gersangPath, "Gersang.exe", SearchOption.TopDirectoryOnly).Length <= 0) {
+                        MessageBox.Show("거상 설치 경로가 현재 유효하지 않습니다. 다시 설정해주세요."
+                            , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-            //저장되어있는 거상 설치 경로가 유효한지 확인합니다.
+                        tb_gersangPath.Clear();
+                        return;
+                    }
+                    tb_gersangPath.Text = gersangPath;
+                } catch(Exception ex) {
+                    Console.WriteLine("Form1_Load_Error...\n" + ex.Message);
+                }
+            }
         }
 
         //////////////////
         //서버 선택 그룹//
         //////////////////
         private void radio_mainServer_Click(object sender, EventArgs e) {
+            if (tb_gersangPath.TextLength != 0) {
+                try {
+                    //GerSangKRTest.ini 파일이 있는 경우 본서버 폴더가 아니라고 메시지를 띄웁니다.
+                    if (Directory.GetFiles(tb_gersangPath.Text, "GerSangKRTest.ini", SearchOption.TopDirectoryOnly).Length > 0) {
+                        DialogResult dr = MessageBox.Show("현재 지정된 거상 경로가 테스트서버 클라이언트인 것 같습니다.\n계속 진행하시겠습니까?"
+                            , "거상 경로", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (dr == DialogResult.No) {
+                            radio_testServer.PerformClick();
+                            return;
+                        }
+                    }
+                } catch (Exception ex) {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+
             this.patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Gersang_Server/";
+            Properties.Settings.Default.isTestServer = false;
+            Properties.Settings.Default.Save();
         }
 
         private void radio_testServer_Click(object sender, EventArgs e) {
+            if(tb_gersangPath.TextLength != 0) {
+                try {
+                    //GerSangKRTest.ini 파일이 없는 경우 테스트서버 폴더가 아니라고 메시지를 띄웁니다.
+                    if (Directory.GetFiles(tb_gersangPath.Text, "GerSangKRTest.ini", SearchOption.TopDirectoryOnly).Length <= 0) {
+                        DialogResult dr = MessageBox.Show("현재 지정된 거상 경로가 본서버 클라이언트인 것 같습니다.\n그래도 계속 진행하시겠습니까?"
+                            , "거상 경로", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if(dr == DialogResult.No) {
+                            radio_mainServer.PerformClick();
+                            return;
+                        }
+                    }
+                } catch (Exception ex) {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+
             this.patchUrl = @"http://akgersang.xdn.kinxcdn.com/Gersang/Patch/Test_Server/";
+            Properties.Settings.Default.isTestServer = true;
+            Properties.Settings.Default.Save();
         }
 
         //////////////////
@@ -66,23 +165,56 @@ namespace GersangPatchMaster {
         //////////////////
         private void btn_openPathFinder_Click(object sender, EventArgs e) {
             folderBrowserDialog1.SelectedPath = null;
-            folderBrowserDialog1.ShowDialog(); //PathFinder 열기
+
+            DialogResult dr = folderBrowserDialog1.ShowDialog(); //PathFinder 열기
+            if(dr == DialogResult.Cancel) {
+                return;
+            }
 
             string selectedPath = folderBrowserDialog1.SelectedPath;
 
+            DirectoryInfo di = new DirectoryInfo(selectedPath);
+
             try {
                 //Gersang.exe 파일이 없는 경우 거상 폴더가 아니라고 메시지를 띄웁니다.
-                if (Directory.GetFiles(selectedPath, "Gersang.exe", SearchOption.TopDirectoryOnly).Length <= 0) {
+                if (di.GetFiles("Gersang.exe", SearchOption.TopDirectoryOnly).Length <= 0) {
                     MessageBox.Show("제대로 된 거상 경로를 지정해주세요. (Gersang.exe 파일이 있는 경로)"
                         , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
                     return;
+                }
+
+                bool isTestServer;
+                if(di.GetFiles("GerSangKRTest.ini", SearchOption.TopDirectoryOnly).Length > 0) {
+                    isTestServer = true;
+                } else {
+                    isTestServer = false;
+                }
+
+                if (radio_mainServer.Checked && isTestServer) {
+                    dr = MessageBox.Show("해당 경로는 테스트서버 경로인 것 같습니다.\n그래도 계속 진행하시겠습니까?"
+                        , "거상 경로", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (dr != DialogResult.Yes) {
+                        return;
+                    }
+                } 
+                
+                if(!radio_mainServer.Checked && !isTestServer) {
+                    dr = MessageBox.Show("해당 경로는 본서버 경로인 것 같습니다.\n그래도 계속 진행하시겠습니까?"
+                        , "거상 경로", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (dr != DialogResult.Yes) {
+                        return;
+                    }
                 }
             } catch(Exception ex) {
                 MessageBox.Show(ex.Message);
             }
             
             tb_gersangPath.Text = folderBrowserDialog1.SelectedPath;
+            Properties.Settings.Default.gersangPath = folderBrowserDialog1.SelectedPath;
+            Properties.Settings.Default.Save();
         }
 
         //////////////////
@@ -151,8 +283,9 @@ namespace GersangPatchMaster {
                 myHttpWebResponse.Close();
             } catch(System.Net.WebException exception) {
                 MessageBox.Show("존재하지 않는 버전입니다. 다른 버전을 입력해주세요."
-                    , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);  
+                    , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
+                isVersionChecked = false;
                 Console.WriteLine(exception);
                 return;
             }
@@ -353,6 +486,8 @@ namespace GersangPatchMaster {
                 string filePath = versionDirectory.FullName + @"\" + item.Value + item.Key;
                 downloadFile(fileLink, filePath);
             }
+
+            isVersionChecked = false;
         }
 
 
@@ -360,28 +495,35 @@ namespace GersangPatchMaster {
         private void applyPatch() {
             DirectoryInfo dirPath = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
 
-            //압축해제한 패치 파일을 지정한 경로의 본클라에 적용시킵니다.
-            copyFolder(Application.StartupPath + '\\' + version, tb_gersangPath.Text);
-
-            MessageBox.Show("패치 적용이 완료되었습니다.");
+            try {
+                //압축해제한 패치 파일을 지정한 경로의 본클라에 적용시킵니다.
+                copyFolder(Application.StartupPath + '\\' + version, tb_gersangPath.Text);
+                MessageBox.Show("패치 적용이 완료되었습니다.");
+            } catch(Exception ex) {
+                MessageBox.Show("패치 복사-붙여넣기 중 오류가 발생하였습니다.\n거상이 켜져있는지 확인해주세요.");
+            }
         }
 
         //패치파일 거상경로에 복사-붙여놓기(덮어쓰기)
         private void copyFolder(string srcPath, string destPath) {
             int count = 0;
 
-            //Now Create all of the directories
-            foreach (string dirPath in Directory.GetDirectories(srcPath, "*", System.IO.SearchOption.AllDirectories))
-                Directory.CreateDirectory(dirPath.Replace(srcPath, destPath));
+            try {
+                //Now Create all of the directories
+                foreach (string dirPath in Directory.GetDirectories(srcPath, "*", System.IO.SearchOption.AllDirectories))
+                    Directory.CreateDirectory(dirPath.Replace(srcPath, destPath));
 
-            //Copy all the files & Replaces any files with the same name
-            foreach (string newPath in Directory.GetFiles(srcPath, "*.*", System.IO.SearchOption.AllDirectories)) {
-                System.IO.File.Copy(newPath, newPath.Replace(srcPath, destPath), true);
-                count++;
+                //Copy all the files & Replaces any files with the same name
+                foreach (string newPath in Directory.GetFiles(srcPath, "*.*", System.IO.SearchOption.AllDirectories)) {
+                    System.IO.File.Copy(newPath, newPath.Replace(srcPath, destPath), true);
+                    count++;
+                }
+
+                Console.WriteLine("총 파일 복사 갯수 : " + count);
+                //FileSystem.CopyDirectory(srcPath, destPath, UIOption.AllDialogs);
+            } catch (Exception ex) {
+                throw (ex);
             }
-
-            Console.WriteLine("총 파일 복사 갯수 : " + count);
-            //FileSystem.CopyDirectory(srcPath, destPath, UIOption.AllDialogs);
         }
 
         //파일 다운로드 코드 (
@@ -525,20 +667,12 @@ namespace GersangPatchMaster {
             }
         }
         private void VisitBlog() {
-            // Change the color of the link text by setting LinkVisited
-            // to true.
             linkLabel_blog.LinkVisited = true;
-            //Call the Process.Start method to open the default browser
-            //with a URL:
             System.Diagnostics.Process.Start("https://blog.naver.com/kog5071/222272427500");
         }
 
         private void VisitGithub() {
-            // Change the color of the link text by setting LinkVisited
-            // to true.
             linkLabel_github.LinkVisited = true;
-            //Call the Process.Start method to open the default browser
-            //with a URL:
             System.Diagnostics.Process.Start("https://github.com/byungmeo/GersangPatchMaster/releases");
         }
     }
