@@ -224,7 +224,6 @@ namespace GersangPatchMaster
             // radio_multi
             // 
             this.radio_multi.AutoSize = true;
-            this.radio_multi.Enabled = false;
             this.radio_multi.Location = new System.Drawing.Point(17, 56);
             this.radio_multi.Name = "radio_multi";
             this.radio_multi.Size = new System.Drawing.Size(53, 16);
@@ -366,7 +365,7 @@ namespace GersangPatchMaster
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(37, 12);
             this.label8.TabIndex = 24;
-            this.label8.Text = "v1.0.0";
+            this.label8.Text = "v1.1.0";
             // 
             // label9
             // 

@@ -6,11 +6,11 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
-using Application = System.Windows.Forms.Application;
-using SearchOption = System.IO.SearchOption;
 
 namespace GersangPatchMaster {
     public partial class Form1 : Form {
@@ -34,7 +34,7 @@ namespace GersangPatchMaster {
             isVersionChecked = false;
 
             //프로그램 실행시 Data 폴더 확인 및 없을경우 Data 폴더 생성
-            System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(Application.StartupPath + @"\PatchInfoFiles");
+            System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(System.Windows.Forms.Application.StartupPath + @"\PatchInfoFiles");
             if (!di.Exists) { di.Create(); }
             patchInfoDir = di.ToString();
 
@@ -217,7 +217,7 @@ namespace GersangPatchMaster {
             Properties.Settings.Default.Save();
         }
 
-        //////////////////
+        //////////////////f
         //패치버전  그룹//
         //////////////////
         private void btn_checkVersion_Click(object sender, EventArgs e) {
@@ -310,8 +310,6 @@ namespace GersangPatchMaster {
                     patchList.Add(version);
                 }
             }
-
-            
 
             if (!isSameVersion) {
                 //최종 버전까지 필요한 패치 정보 파일을 모두 다운받습니다. (구버전 배려)
@@ -473,7 +471,7 @@ namespace GersangPatchMaster {
             downloadCompletedCount = 0;
 
             //버전이름의 폴더가 없다면 생성합니다.
-            System.IO.DirectoryInfo versionDirectory = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
+            System.IO.DirectoryInfo versionDirectory = new System.IO.DirectoryInfo(System.Windows.Forms.Application.StartupPath + @"\" + version);
             if (!versionDirectory.Exists) { versionDirectory.Create(); }
 
             sw = new Stopwatch();
@@ -490,14 +488,158 @@ namespace GersangPatchMaster {
             isVersionChecked = false;
         }
 
+        //다클라 생성
+        private void CreateClient() {
+            ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo();
+            Process p = new System.Diagnostics.Process();
 
+            psi.FileName = @"cmd";
+            psi.WorkingDirectory = tb_gersangPath.Text + @"\..";
+            psi.CreateNoWindow = true;
+            psi.UseShellExecute = false;
+            psi.RedirectStandardOutput = false; //IF WANT DEBUG, SET "TRUE"
+            psi.RedirectStandardInput = true;
+            psi.RedirectStandardError = true;
+
+            p.StartInfo = psi;
+            p.Start();
+
+            //CMD 구문 실행 (p는 AKInteractive 폴더에 머물러있는상태)
+            Debug.WriteLine("CreateDirectory 진입 전");
+            CreateDirectory(ref p);
+            Debug.WriteLine("CreateSymbolicLink 진입 전");
+            CreateSymbolicLink(ref p);
+            //
+            Thread.Sleep(500);
+
+            Debug.WriteLine("CopyFile 진입 전");
+            CopyFile();
+            Debug.WriteLine("CopyFile 진입 종료");
+
+            p.StandardInput.Close();
+            p.WaitForExit();
+            p.Close();
+        }
+
+        private void CreateSymbolicLink(ref Process p) {
+            string sourcePath = tb_gersangPath.Text;
+            string secondPath = sourcePath + @"\..\" + tb_second.Text;
+            string thirdPath = sourcePath + @"\..\" + tb_third.Text;
+
+            //char, eft, fnt, music, Online, pal, tempeft, Temporary Autopath, tile, yfnt, XIGNCODE
+            string[] targetDirectorys = { "char", "eft", "fnt", "music", "Online", "pal", "tempeft", "Temporary Autopath", "tile", "yfnt", "XIGNCODE" };
+            List<string> targetDirectorysList = new List<string>(targetDirectorys);
+
+            Debug.WriteLine("CreateSymbolicLink - Online관련 진입 전");
+
+            //본클과 클라들이 세팅을 서로 독립적으로 유지하고싶을때
+            FixedOnlineDirectory(secondPath, ref p);
+            FixedOnlineDirectory(thirdPath, ref p);
+            targetDirectorysList.Remove("Online"); //Online폴더의 심볼릭링크를 생성하지않도록 리스트에서 삭제
+            
+
+            Debug.WriteLine("CreateSymbolicLink - foreach관련 진입 전");
+            //최종적으로 targetDirectorysList에 있는 폴더들을 심볼릭링크로 생성합니다.
+            foreach (string target in targetDirectorysList) {
+                //mklink /d \Gersang\char \Gersang2\char
+                InsertLog(@"mklink /d """ + secondPath + @"\" + target + @""" """ + sourcePath + @"\" + target + @"""" + Environment.NewLine + "\n");
+                InsertLog(@"mklink /d """ + thirdPath + @"\" + target + @""" """ + sourcePath + @"\" + target + @"""" + Environment.NewLine + "\n");
+
+                p.StandardInput.Write(@"mklink /d """ + secondPath + @"\" + target + @""" """ + sourcePath + @"\" + target + @"""" + Environment.NewLine);
+                p.StandardInput.Write(@"mklink /d """ + thirdPath + @"\" + target + @""" """ + sourcePath + @"\" + target + @"""" + Environment.NewLine);
+            }
+        }
+
+        private void CopyFile() {
+            //file, .dll, .exe, .ln, .gcs, .gts, .ini, .ico
+            string fileName;
+            string destFile;
+            string sourcePath = tb_gersangPath.Text;
+            string secondPath = sourcePath + @"\..\" + tb_second.Text;
+            string thirdPath = sourcePath + @"\..\" + tb_third.Text;
+
+            if (Directory.Exists(sourcePath)) {
+                var Files = Directory.GetFiles(sourcePath, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(s => s.EndsWith(".dll") || s.EndsWith(".exe") || s.EndsWith(".ln") || s.EndsWith(".gcs")
+                || s.EndsWith(".gts") || s.EndsWith(".ini") || s.EndsWith(".ico"));
+
+                foreach (string s in Files) {
+                    fileName = Path.GetFileName(s);
+
+                    //second
+                    destFile = Path.Combine(secondPath, fileName);
+                    System.IO.File.Copy(s, destFile, true);
+
+                    //third
+                    destFile = Path.Combine(thirdPath, fileName);
+                    System.IO.File.Copy(s, destFile, true);
+                }
+            }
+        }
+
+        private void CreateDirectory(ref Process p) {
+            p.StandardInput.Write(@"mkdir " + tb_second.Text + Environment.NewLine);
+            p.StandardInput.Write(@"mkdir " + tb_third.Text + Environment.NewLine);
+        }
+
+        private bool IsSymbolic(string path) {
+            FileInfo pathInfo = new FileInfo(path);
+            return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+        }
+
+        //Online폴더는 예외적으로 작업
+        private void FixedOnlineDirectory(string subClientPath, ref Process p) {
+            string sourcePath = tb_gersangPath.Text + @"\Online";
+            string onlinePath = subClientPath + @"\Online";
+
+            //이미 생성된 Online 폴더가 있을 경우
+            if (Directory.Exists(onlinePath)) {
+                //심볼릭 링크인지 확인합니다. 심볼릭이라면, 세팅을 공유하고있으므로, 삭제하고 일반 폴더를 만듭니다.
+                if (IsSymbolic(onlinePath)) {
+                    Directory.Delete(onlinePath);
+                    Directory.CreateDirectory(onlinePath);
+                }
+            } else {
+                //애초에 처음 클라폴더를 생성하는 경우입니다
+                Directory.CreateDirectory(onlinePath);
+            }
+
+            //이미 파일이 있는 경우를 제외하고 본클의 Online\위치에있는 파일들을 복사해옵니다.
+            //2021-08-19 : KeySetting.dat만 복사하고, 나머지는 심블릭파일로 만든다
+            foreach (string target in Directory.GetFiles(sourcePath, "*.*", SearchOption.TopDirectoryOnly)) {
+                //Path.Combine함수 특징상 @"\"를 앞에 붙이지 말 것 (상대경로 절대경로 이해)
+                //target = 전체경로
+                //fileName = 경로제외하고 파일 이름만 (ex : KeySetting.dat)
+                string fileName = new FileInfo(target).Name;
+
+                //KeySetting.dat은 복사
+                if (fileName == "KeySetting.dat") {
+
+                    if (!System.IO.File.Exists(onlinePath + @"\" + fileName)) {
+                        string destFile = Path.Combine(onlinePath, fileName);
+                        System.IO.File.Copy(target, destFile, true);
+                    }
+                } else {
+                    InsertLog(@"mklink """ + onlinePath + @"\" + fileName + @""" """ + sourcePath + @"\" + fileName + @"""" + Environment.NewLine + "\n");
+                    //그 외 파일은 심볼릭으로 (파일은 /d 옵션이 필요없다)
+                    p.StandardInput.Write(@"mklink """ + onlinePath + @"\" + fileName + @""" """ + sourcePath + @"\" + fileName + @"""" + Environment.NewLine);
+                }
+            }
+
+            //본클 Online폴더-하위폴더들의 심볼릭링크를 만듭니다.
+            foreach (string target in Directory.GetDirectories(sourcePath, "*.*", SearchOption.TopDirectoryOnly)) {
+                string dirName = @"\" + new DirectoryInfo(target).Name;
+                InsertLog(@"mklink /d """ + onlinePath + dirName + @""" """ + sourcePath + dirName + @"""" + Environment.NewLine + "\n");
+                p.StandardInput.Write(@"mklink /d """ + onlinePath + dirName + @""" """ + sourcePath + dirName + @"""" + Environment.NewLine);
+            }
+        }
 
         private void applyPatch() {
-            DirectoryInfo dirPath = new System.IO.DirectoryInfo(Application.StartupPath + @"\" + version);
+            DirectoryInfo dirPath = new System.IO.DirectoryInfo(System.Windows.Forms.Application.StartupPath + @"\" + version);
 
             try {
                 //압축해제한 패치 파일을 지정한 경로의 본클라에 적용시킵니다.
-                copyFolder(Application.StartupPath + '\\' + version, tb_gersangPath.Text);
+                copyFolder(System.Windows.Forms.Application.StartupPath + '\\' + version, tb_gersangPath.Text);
                 MessageBox.Show("패치 적용이 완료되었습니다.");
             } catch(Exception ex) {
                 MessageBox.Show("패치 복사-붙여넣기 중 오류가 발생하였습니다.\n거상이 켜져있는지 확인해주세요.");
@@ -539,7 +681,26 @@ namespace GersangPatchMaster {
                     sw.Stop();
                     InsertLog("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과\n");
 
-                    //this.Enabled = true;
+                    if (check_noApply.Checked) {
+                        MessageBox.Show("패치 수동 적용을 선택하셨습니다.\n" +
+                            "패치 파일은 버전명으로 된 폴더에 들어있습니다.\n" +
+                            "적용시키고자 하신다면, 거상 폴더에 복사-붙여놓기 하시기 바랍니다.");
+                    } else {
+                        applyPatch();
+                        InsertLog("패치 적용 완료!\n");
+                    }
+
+                    if (radio_multi.Checked) {
+                        CreateClient();
+                        InsertLog("다클라 생성 완료!\n");
+                    }
+
+                    if (check_shortcut.Checked) {
+                        CreateShortcut();
+                        InsertLog("바로가기 생성 완료!\n");
+                    }
+
+                    this.Enabled = true;
                 }
 
                 return;
@@ -581,12 +742,17 @@ namespace GersangPatchMaster {
                                     "적용시키고자 하신다면, 거상 폴더에 복사-붙여놓기 하시기 바랍니다.");
                             } else {
                                 applyPatch();
-                                InsertLog("패치 적용 완료!");
+                                InsertLog("패치 적용 완료!\n");
+                            }
+
+                            if (radio_multi.Checked) {
+                                CreateClient();
+                                InsertLog("다클라 생성 완료!\n");
                             }
 
                             if (check_shortcut.Checked) {
                                 CreateShortcut();
-                                InsertLog("바로가기 생성 완료!");
+                                InsertLog("바로가기 생성 완료!\n");
                             }
 
                             this.Enabled = true;
