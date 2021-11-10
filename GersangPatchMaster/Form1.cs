@@ -49,7 +49,7 @@ namespace GersangPatchMaster {
                 IReadOnlyList<Release> releases = await client.Repository.Release.GetAll("byungmeo", "GersangPatchMaster");
                 //Setup the versions
                 Version latestGitHubVersion = new Version(releases[0].TagName);
-                Version localVersion = new Version("1.0.0"); //Replace this with your local version. 
+                Version localVersion = new Version("1.1.1"); //Replace this with your local version. 
                                                              //Only tested with numeric values.
 
                 Console.WriteLine("깃허브에 마지막으로 게시된 버전 : " + latestGitHubVersion);
