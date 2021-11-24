@@ -365,7 +365,7 @@ namespace GersangPatchMaster
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(37, 12);
             this.label8.TabIndex = 24;
-            this.label8.Text = "v1.1.1";
+            this.label8.Text = "v1.1.2";
             // 
             // label9
             // 
