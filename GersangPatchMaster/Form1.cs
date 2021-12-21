@@ -14,6 +14,8 @@ using System.Windows.Forms;
 
 namespace GersangPatchMaster {
     public partial class Form1 : Form {
+        private string programVersion;
+
         //
         private string patchInfoDir;
         private Uri infoUrl;
@@ -42,23 +44,23 @@ namespace GersangPatchMaster {
         }
 
         private async void checkUpdate() {
+            programVersion = System.Windows.Forms.Application.ProductVersion.Substring(0,5);
+
             try {
-                //Get all releases from GitHub
-                //Source: https://octokitnet.readthedocs.io/en/latest/getting-started/
+                //깃허브에서 모든 릴리즈 정보를 받아옵니다.
                 GitHubClient client = new GitHubClient(new ProductHeaderValue("Byungmeo"));
                 IReadOnlyList<Release> releases = await client.Repository.Release.GetAll("byungmeo", "GersangPatchMaster");
-                //Setup the versions
-                Version latestGitHubVersion = new Version(releases[0].TagName);
-                Version localVersion = new Version("1.1.2"); //Replace this with your local version. 
-                                                             //Only tested with numeric values.
 
-                Console.WriteLine("깃허브에 마지막으로 게시된 버전 : " + latestGitHubVersion);
-                //Compare the Versions
-                //Source: https://stackoverflow.com/questions/7568147/compare-version-numbers-without-using-split-function
+                //깃허브에 게시된 마지막 버전과 현재 버전을 초기화 합니다.
+                Version latestGitHubVersion = new Version(releases[0].TagName);
+                Version localVersion = new Version(programVersion);
+                Debug.WriteLine("깃허브에 마지막으로 게시된 버전 : " + latestGitHubVersion);
+                Debug.WriteLine("현재 프로젝트 버전 : " + localVersion);
+
+                //버전 비교
                 int versionComparison = localVersion.CompareTo(latestGitHubVersion);
                 if (versionComparison < 0) {
-                    //The version on GitHub is more up to date than this local release.
-                    Console.WriteLine("구버전입니다! 업데이트 메시지박스를 출력합니다!");
+                    Debug.WriteLine("구버전입니다! 업데이트 메시지박스를 출력합니다!");
 
                     DialogResult dr = MessageBox.Show(releases[0].Body + "\n\n업데이트 하시겠습니까? (GitHub 접속)",
                         "업데이트 안내", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
@@ -67,20 +69,20 @@ namespace GersangPatchMaster {
                         System.Diagnostics.Process.Start("https://github.com/byungmeo/GersangPatchMaster/releases/latest");
                     }
                 } else if (versionComparison > 0) {
-                    //This local version is greater than the release version on GitHub.
-                    Console.WriteLine("깃허브에 릴리즈된 버전보다 최신입니다!");
+                    Debug.WriteLine("깃허브에 릴리즈된 버전보다 최신입니다!");
                 } else {
-                    //This local Version and the Version on GitHub are equal.
-                    Console.WriteLine("현재 버전은 최신버전입니다!");
+                    Debug.WriteLine("현재 버전은 최신버전입니다!");
                 }
             } catch (Exception ex) {
-                Console.WriteLine(ex.Message);
+                InsertLog("업데이트 확인 과정에 예외가 발생하였습니다.\n" + ex.Message);
+                Debug.WriteLine(ex.Message);
             }
         }
 
         private void Form1_Load(object sender, EventArgs e) {
             label_patchDate.Text = "";
             label_frontVersionCount.Text = "";
+            label_programVersion.Text = "v." + programVersion;
 
             bool isTestServer = Properties.Settings.Default.isTestServer;
             string gersangPath = Properties.Settings.Default.gersangPath;
@@ -106,7 +108,8 @@ namespace GersangPatchMaster {
                     }
                     tb_gersangPath.Text = gersangPath;
                 } catch(Exception ex) {
-                    Console.WriteLine("Form1_Load_Error...\n" + ex.Message);
+                    InsertLog("거상 설치 경로를 불러오던 중 오류가 발생하였습니다\n" + ex.Message);
+                    Debug.WriteLine(ex.Message);
                 }
             }
         }
@@ -128,7 +131,8 @@ namespace GersangPatchMaster {
                         }
                     }
                 } catch (Exception ex) {
-                    MessageBox.Show(ex.Message);
+                    InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message);
+                    Debug.WriteLine(ex.Message);
                 }
             }
 
@@ -151,7 +155,8 @@ namespace GersangPatchMaster {
                         }
                     }
                 } catch (Exception ex) {
-                    MessageBox.Show(ex.Message);
+                    InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message);
+                    Debug.WriteLine(ex.Message);
                 }
             }
 
@@ -209,7 +214,8 @@ namespace GersangPatchMaster {
                     }
                 }
             } catch(Exception ex) {
-                MessageBox.Show(ex.Message);
+                InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message);
+                Debug.WriteLine(ex.Message);
             }
             
             tb_gersangPath.Text = folderBrowserDialog1.SelectedPath;
@@ -286,7 +292,7 @@ namespace GersangPatchMaster {
                     , "오류", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
                 isVersionChecked = false;
-                Console.WriteLine(exception);
+                Debug.WriteLine(exception.Message);
                 return;
             }
 
@@ -330,7 +336,8 @@ namespace GersangPatchMaster {
                         patchList.Add(i.ToString());
                     } catch (Exception ex) {
                         //다운로드 실패 시 다음 버전으로 넘어갑니다
-                        //Console.WriteLine(ex);
+                        InsertLog("해당하는 버전의 패치 정보 파일이 없어 다음 버전으로 넘어갑니다.");
+                        Debug.WriteLine(ex.Message);
                     }
                 }
             }
@@ -527,11 +534,18 @@ namespace GersangPatchMaster {
             string thirdPath = sourcePath + @"\..\" + tb_third.Text;
 
             //char, eft, fnt, music, Online, pal, tempeft, Temporary Autopath, tile, yfnt, XIGNCODE
-            string[] targetDirectorys = { "char", "eft", "fnt", "music", "Online", "pal", "tempeft", "Temporary Autopath", "tile", "yfnt", "XIGNCODE" };
+            //+2021-12-21 XIGNCODE폴더는 윈11에서 심볼릭링크로 하면 거상 실행이 안되는 문제점이 식별되어 직접복사로 바꿈
+            string[] targetDirectorys = { "char", "eft", "fnt", "music", "Online", "pal", "Production", "tempeft", "Temporary Autopatch", "tile", "yfnt"};
             List<string> targetDirectorysList = new List<string>(targetDirectorys);
 
-            Debug.WriteLine("CreateSymbolicLink - Online관련 진입 전");
+            //+2021-12-21 XIGNCODE는 직접 복사
+            InsertLog(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + secondPath + @"\XIGNCODE"" /i");
+            p.StandardInput.Write(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + secondPath + @"\XIGNCODE"" /i" + Environment.NewLine);
 
+            InsertLog(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + thirdPath + @"\XIGNCODE"" /i");
+            p.StandardInput.Write(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + thirdPath + @"\XIGNCODE"" /i" + Environment.NewLine);
+
+            Debug.WriteLine("CreateSymbolicLink - Online관련 진입 전");
             //본클과 클라들이 세팅을 서로 독립적으로 유지하고싶을때
             FixedOnlineDirectory(secondPath, ref p);
             FixedOnlineDirectory(thirdPath, ref p);
@@ -643,6 +657,7 @@ namespace GersangPatchMaster {
                 MessageBox.Show("패치 적용이 완료되었습니다.");
             } catch(Exception ex) {
                 MessageBox.Show("패치 복사-붙여넣기 중 오류가 발생하였습니다.\n거상이 켜져있는지 확인해주세요.");
+                Debug.WriteLine(ex.Message);
             }
         }
 
@@ -821,6 +836,7 @@ namespace GersangPatchMaster {
             try {
                 VisitBlog();
             } catch (Exception ex) {
+                Debug.WriteLine(ex.Message);
                 MessageBox.Show("Unable to open link that was clicked.");
             }
         }
@@ -829,6 +845,7 @@ namespace GersangPatchMaster {
             try {
                 VisitGithub();
             } catch (Exception ex) {
+                Debug.WriteLine(ex.Message);
                 MessageBox.Show("Unable to open link that was clicked.");
             }
         }

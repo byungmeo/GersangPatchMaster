@@ -58,7 +58,7 @@ namespace GersangPatchMaster
             this.linkLabel_github = new System.Windows.Forms.LinkLabel();
             this.pic_naver = new System.Windows.Forms.PictureBox();
             this.linkLabel_blog = new System.Windows.Forms.LinkLabel();
-            this.label8 = new System.Windows.Forms.Label();
+            this.label_programVersion = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.rtb_logBox = new System.Windows.Forms.RichTextBox();
             this.group_selectServer.SuspendLayout();
@@ -358,14 +358,14 @@ namespace GersangPatchMaster
             this.linkLabel_blog.Text = "Blog";
             this.linkLabel_blog.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel_blog_LinkClicked);
             // 
-            // label8
+            // label_programVersion
             // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(290, 479);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(37, 12);
-            this.label8.TabIndex = 24;
-            this.label8.Text = "v1.1.2";
+            this.label_programVersion.AutoSize = true;
+            this.label_programVersion.Location = new System.Drawing.Point(290, 479);
+            this.label_programVersion.Name = "label_programVersion";
+            this.label_programVersion.Size = new System.Drawing.Size(37, 12);
+            this.label_programVersion.TabIndex = 24;
+            this.label_programVersion.Text = "v0.0.0";
             // 
             // label9
             // 
@@ -393,7 +393,7 @@ namespace GersangPatchMaster
             this.ClientSize = new System.Drawing.Size(714, 528);
             this.Controls.Add(this.rtb_logBox);
             this.Controls.Add(this.label9);
-            this.Controls.Add(this.label8);
+            this.Controls.Add(this.label_programVersion);
             this.Controls.Add(this.linkLabel_blog);
             this.Controls.Add(this.pic_naver);
             this.Controls.Add(this.linkLabel_github);
@@ -456,7 +456,7 @@ namespace GersangPatchMaster
         private System.Windows.Forms.LinkLabel linkLabel_github;
         private System.Windows.Forms.PictureBox pic_naver;
         private System.Windows.Forms.LinkLabel linkLabel_blog;
-        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label_programVersion;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.CheckBox check_third;
         private System.Windows.Forms.CheckBox check_second;
