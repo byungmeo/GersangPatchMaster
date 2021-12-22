@@ -390,7 +390,7 @@ namespace GersangPatchMaster
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(714, 528);
+            this.ClientSize = new System.Drawing.Size(714, 530);
             this.Controls.Add(this.rtb_logBox);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label_programVersion);

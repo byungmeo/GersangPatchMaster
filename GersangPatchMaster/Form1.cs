@@ -28,6 +28,7 @@ namespace GersangPatchMaster {
         private string patchUrl;
         private Dictionary<string, string> patchFileList;
         private bool isVersionChecked;
+        private int errorCount;
 
         public Form1() {
             checkUpdate();
@@ -112,6 +113,9 @@ namespace GersangPatchMaster {
                     Debug.WriteLine(ex.Message);
                 }
             }
+
+            
+             
         }
 
         //////////////////
@@ -685,6 +689,8 @@ namespace GersangPatchMaster {
 
         //파일 다운로드 코드 (
         private void downloadFile(Uri downloadUrl, string filePath) {
+            errorCount = 0;
+
             string fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1); //파일이름만 추출합니다
 
             //이미 패치 파일을 다운로드한 경우, 다운받지 않습니다.
@@ -734,20 +740,24 @@ namespace GersangPatchMaster {
                 client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
                     // display completion status.
                     if (e.Error != null) {
-                        InsertLog("다운로드 중 예기치 못한 오류가 발생하였습니다!");
+                        InsertLog(fileName + " 다운로드 중 예기치 못한 오류가 발생하였습니다!\n");
                         InsertLog("오류 메시지 : " + e.Error.Message);
+                        errorCount++;
+                        downloadCompletedCount++;
                     } else {
                         InsertLog(fileName + " 다운로드 완료! " + (patchFileCount - (++downloadCompletedCount)) + "개 남음!\n");
                         try {
                             ZipFile.ExtractToDirectory(filePath, new FileInfo(filePath).DirectoryName);
                             System.IO.File.Delete(filePath);
                         } catch(Exception ex) {
-                            Console.WriteLine("downloadFileCompleted : " + ex.Message);
+                            InsertLog("압축 해제가 정상적으로 완료되지 않음! : " + ex.Message);
+                            Debug.WriteLine("압축 해제가 정상적으로 완료되지 않음! : " + ex.Message);
                         }
 
                         //다운로드가 다 되었다면, 시간을 측정하고, 패치 적용 및 바로가기를 생성합니다.
                         if (downloadCompletedCount == patchFileCount) {
                             InsertLog("모든 패치파일 다운로드 및 압축해제 완료!\n");
+                            InsertLog("다운로드 실패 한 파일 갯수 : " + errorCount);
                             sw.Stop();
                             InsertLog("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과\n");
 
@@ -775,8 +785,13 @@ namespace GersangPatchMaster {
                     }
                 };
 
-                //지정된 경로에 패치 파일 다운로드를 시작합니다.
-                client.DownloadFileAsync(downloadUrl, filePath);
+                try {
+                    //지정된 경로에 패치 파일 다운로드를 시작합니다.
+                    client.DownloadFileAsync(downloadUrl, filePath);
+                } catch (Exception e) {
+                    InsertLog("파일 다운로드 시작 전 에러 : " + e.Message);
+                }
+                
             }
         }
 
