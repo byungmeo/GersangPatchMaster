@@ -75,7 +75,7 @@ namespace GersangPatchMaster {
                     Debug.WriteLine("현재 버전은 최신버전입니다!");
                 }
             } catch (Exception ex) {
-                InsertLog("업데이트 확인 과정에 예외가 발생하였습니다.\n" + ex.Message);
+                InsertLog("업데이트 확인 과정에 예외가 발생하였습니다.\n" + ex.Message + "\n");
                 Debug.WriteLine(ex.Message);
             }
         }
@@ -109,7 +109,7 @@ namespace GersangPatchMaster {
                     }
                     tb_gersangPath.Text = gersangPath;
                 } catch(Exception ex) {
-                    InsertLog("거상 설치 경로를 불러오던 중 오류가 발생하였습니다\n" + ex.Message);
+                    InsertLog("거상 설치 경로를 불러오던 중 오류가 발생하였습니다\n" + ex.Message + "\n");
                     Debug.WriteLine(ex.Message);
                 }
             }
@@ -135,7 +135,7 @@ namespace GersangPatchMaster {
                         }
                     }
                 } catch (Exception ex) {
-                    InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message);
+                    InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message + "\n");
                     Debug.WriteLine(ex.Message);
                 }
             }
@@ -159,7 +159,7 @@ namespace GersangPatchMaster {
                         }
                     }
                 } catch (Exception ex) {
-                    InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message);
+                    InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message + "\n");
                     Debug.WriteLine(ex.Message);
                 }
             }
@@ -218,7 +218,7 @@ namespace GersangPatchMaster {
                     }
                 }
             } catch(Exception ex) {
-                InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message);
+                InsertLog("선택한 거상 경로를 불러오던 중 오류가 발생하였습니다.\n" + ex.Message + "\n");
                 Debug.WriteLine(ex.Message);
             }
             
@@ -330,7 +330,7 @@ namespace GersangPatchMaster {
                     string downloadUrl = patchUrl + @"Client_info_File/" + i;
                     try {
                         webClient.DownloadFile(new Uri(downloadUrl), patchInfoDir + @"\" + i + ".txt");
-                        InsertLog(i + " 버전 패치정보 파일 다운로드 성공\r\n");
+                        InsertLog(i + " 버전 패치정보 파일 다운로드 성공\n");
 
                         /*
                         txt_LogBox.Text += i + " 버전 패치파일 다운로드 및 압축해제 시작\r\n";
@@ -340,7 +340,7 @@ namespace GersangPatchMaster {
                         patchList.Add(i.ToString());
                     } catch (Exception ex) {
                         //다운로드 실패 시 다음 버전으로 넘어갑니다
-                        InsertLog("해당하는 버전의 패치 정보 파일이 없어 다음 버전으로 넘어갑니다.");
+                        InsertLog("버전 " + i + " 이 존재하지 않아 다음 버전으로 넘어갑니다.\n");
                         Debug.WriteLine(ex.Message);
                     }
                 }
@@ -543,10 +543,10 @@ namespace GersangPatchMaster {
             List<string> targetDirectorysList = new List<string>(targetDirectorys);
 
             //+2021-12-21 XIGNCODE는 직접 복사
-            InsertLog(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + secondPath + @"\XIGNCODE"" /i");
+            InsertLog(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + secondPath + @"\XIGNCODE"" /i\n");
             p.StandardInput.Write(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + secondPath + @"\XIGNCODE"" /i" + Environment.NewLine);
 
-            InsertLog(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + thirdPath + @"\XIGNCODE"" /i");
+            InsertLog(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + thirdPath + @"\XIGNCODE"" /i\n");
             p.StandardInput.Write(@"xcopy """ + sourcePath + @"\XIGNCODE"" """ + thirdPath + @"\XIGNCODE"" /i" + Environment.NewLine);
 
             Debug.WriteLine("CreateSymbolicLink - Online관련 진입 전");
@@ -741,7 +741,7 @@ namespace GersangPatchMaster {
                     // display completion status.
                     if (e.Error != null) {
                         InsertLog(fileName + " 다운로드 중 예기치 못한 오류가 발생하였습니다!\n");
-                        InsertLog("오류 메시지 : " + e.Error.Message);
+                        InsertLog("오류 메시지 : " + e.Error.Message + "\n");
                         errorCount++;
                         downloadCompletedCount++;
                     } else {
@@ -750,14 +750,14 @@ namespace GersangPatchMaster {
                             ZipFile.ExtractToDirectory(filePath, new FileInfo(filePath).DirectoryName);
                             System.IO.File.Delete(filePath);
                         } catch(Exception ex) {
-                            InsertLog("압축 해제가 정상적으로 완료되지 않음! : " + ex.Message);
+                            InsertLog("압축 해제가 정상적으로 완료되지 않음! : " + ex.Message + "\n");
                             Debug.WriteLine("압축 해제가 정상적으로 완료되지 않음! : " + ex.Message);
                         }
 
                         //다운로드가 다 되었다면, 시간을 측정하고, 패치 적용 및 바로가기를 생성합니다.
                         if (downloadCompletedCount == patchFileCount) {
                             InsertLog("모든 패치파일 다운로드 및 압축해제 완료!\n");
-                            InsertLog("다운로드 실패 한 파일 갯수 : " + errorCount);
+                            InsertLog("다운로드 실패 한 파일 갯수 : " + errorCount + "\n");
                             sw.Stop();
                             InsertLog("다운로드 완료까지 " + sw.ElapsedMilliseconds.ToString() + "ms초 경과\n");
 
@@ -789,7 +789,7 @@ namespace GersangPatchMaster {
                     //지정된 경로에 패치 파일 다운로드를 시작합니다.
                     client.DownloadFileAsync(downloadUrl, filePath);
                 } catch (Exception e) {
-                    InsertLog("파일 다운로드 시작 전 에러 : " + e.Message);
+                    InsertLog("파일 다운로드 시작 전 에러 : " + e.Message + "\n");
                 }
                 
             }
